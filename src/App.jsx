@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import IntroPage from "./IntroPage";
-import Quiz from "./Quiz";
+import IntroPage from "./components/IntroPage";
+import Quiz from "./components/Quiz";
 import blobOne from "./assets/blob-one.png";
 import blobTwo from "./assets/blob-two.png";
 
 function App() {
-  const [isQuizStarted, setIsQuizStart] = useState(false);
+  const [isQuizStarted, setIsQuizStarted] = useState(false);
   const [quiz, setQuiz] = useState([]);
+  const [isQuizEnded, setQuizEnded] = useState(false);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -26,23 +28,53 @@ function App() {
             };
           });
           setQuiz(() => newData);
-        });
+        })
+        .catch((err) => console.error(err));
 
     return () => controller.abort();
-  }, [isQuizStarted]);
+  }, [isQuizStarted, quiz]);
 
+  const quizElements = [
+    quiz.map((que, i) => (
+      <Quiz
+        key={i}
+        id={i + 1}
+        {...que}
+        isQuizEnded={isQuizEnded}
+        increaseScore={setScore}
+      />
+    )),
+  ];
   return (
     <main className="main">
-      {!isQuizStarted && <IntroPage handleClick={() => setIsQuizStart(true)} />}
-      {isQuizStarted && (
-        <>
-          {quiz.map((que, i) => (
-            <Quiz key={i} id={i + 1} {...que} />
-          ))}
-        </>
+      {!isQuizStarted && (
+        <IntroPage handleClick={() => setIsQuizStarted(true)} />
       )}
-      {isQuizStarted && quiz.length > 0 && (
-        <button className="start-quiz-btn check-btn">Check answers</button>
+      {isQuizStarted && quizElements}
+      {isQuizStarted && quiz.length > 0 && !isQuizEnded && (
+        <button
+          className="start-quiz-btn check-btn"
+          onClick={() => setQuizEnded((prev) => !prev)}
+        >
+          Check answers
+        </button>
+      )}
+      {isQuizEnded && (
+        <section>
+          <p>
+            You scored {score}/{quiz.length} correct answers
+          </p>
+          <button
+            className="start-quiz-btn"
+            onClick={() => {
+              setQuiz([]);
+              setQuizEnded((prev) => !prev);
+              setScore(0);
+            }}
+          >
+            Play Again
+          </button>
+        </section>
       )}
       <img src={blobOne} alt="" className="blob-one" />
       <img src={blobTwo} alt="" className="blob-two" />
