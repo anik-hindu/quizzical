@@ -42,7 +42,7 @@ function Quiz({
             className += " wrong disabled";
           }
 
-          if (isQuizEnded && !isSelected) {
+          if (isQuizEnded && !isSelected && !isCorrect) {
             className += " disabled";
           }
 
