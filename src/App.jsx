@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IntroPage from "./IntroPage";
 import Quiz from "./Quiz";
 import blobOne from "./assets/blob-one.png";
@@ -6,43 +6,42 @@ import blobTwo from "./assets/blob-two.png";
 
 function App() {
   const [isQuizStarted, setIsQuizStart] = useState(false);
+  const [quiz, setQuiz] = useState([]);
 
-  const questionsArr = [
-    "What is My name?",
-    "What I am learning currently? ",
-    "What role I am seeking? ",
-    "Where do I live? ",
-    "What are you studying? ",
-  ];
-  const choices = [
-    ["Anik", "Usme", "Shoham", "Hajbi"],
-    ["React", "JavaScript", "Next.js", "Tailwind"],
-    [
-      "Front-End Engineer",
-      "Backend Engineer",
-      "Full-Stack Engineer",
-      "Software Engineer",
-    ],
-    ["Bangladesh", "USA", "Germany", "Japan"],
-    [
-      "Bsc in Engineering",
-      "Diploma in Enginering",
-      "Msc in Engineering",
-      "Phd",
-    ],
-  ];
+  useEffect(() => {
+    const controller = new AbortController();
+    if (isQuizStarted)
+      fetch(
+        "https://opentdb.com/api.php?amount=5&category=18&difficulty=easy&type=multiple",
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const newData = data.results.map((q) => {
+            return {
+              question: q.question,
+              choicesArr: [q.correct_answer, ...q.incorrect_answers].sort(
+                () => Math.random() - 0.5,
+              ),
+              correct: q.correct_answer,
+            };
+          });
+          setQuiz(() => newData);
+        });
+
+    return () => controller.abort();
+  }, [isQuizStarted]);
 
   return (
     <main className="main">
       {!isQuizStarted && <IntroPage handleClick={() => setIsQuizStart(true)} />}
       {isQuizStarted && (
         <>
-          {questionsArr.map((que, i) => (
-            <Quiz key={i} question={que} choicesArr={choices[i]} />
+          {quiz.map((que, i) => (
+            <Quiz key={i} id={i + 1} {...que} />
           ))}
         </>
       )}
-      {isQuizStarted && (
+      {isQuizStarted && quiz.length > 0 && (
         <button className="start-quiz-btn check-btn">Check answers</button>
       )}
       <img src={blobOne} alt="" className="blob-one" />
